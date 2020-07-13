@@ -1,0 +1,4 @@
+torchsample
+nibabel
+torch
+tensorflow >= 2.0
