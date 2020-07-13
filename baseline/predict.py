@@ -3,12 +3,11 @@
 '''
 @Author: jby
 @Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-13 17:09:33
+@LastEditTime: 2020-07-13 20:41:24
 @LastEditors: Please set LastEditors
 @Description: In User Settings Edit
 @FilePath: /baseline/predict.py
 '''
-
 
 import config
 import torch

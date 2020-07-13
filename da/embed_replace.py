@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+@Author: lpx
+@Date: 2020-07-13 20:16:37
+@LastEditTime: 2020-07-13 20:44:00
+@LastEditors: Please set LastEditors
+@Description: In User Settings Edit
+@FilePath: /JD_project_2/da/embed_replace.py
+'''
+
 from gensim.models import KeyedVectors, TfidfModel
 from gensim.corpora import Dictionary
 from data_utils import read_samples, isChinese, write_samples

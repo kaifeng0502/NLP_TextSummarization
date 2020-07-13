@@ -1,10 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
-@Author: your name
+@Author: lpx, jby
 @Date: 2020-05-20 10:44:12
-@LastEditTime: 2020-07-13 17:25:04
+@LastEditTime: 2020-07-13 20:40:45
 @LastEditors: Please set LastEditors
 @Description: In User Settings Edit
-@FilePath: /ptg/config.py
+@FilePath: /baseline/config.py
 '''
 from typing import Optional
 

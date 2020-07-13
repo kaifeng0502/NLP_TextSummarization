@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+'''
+@Author: lpx
+@Date: 2020-07-13 20:16:37
+@LastEditTime: 2020-07-13 20:44:37
+@LastEditors: Please set LastEditors
+@Description: In User Settings Edit
+@FilePath: /JD_project_2/da/read_json.py
+'''
+
 import json
 import jieba
 from data_utils import write_samples

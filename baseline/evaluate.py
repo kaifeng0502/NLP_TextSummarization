@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
-@Author: your name
+@Author: jby
 @Date: 2020-05-20 10:56:49
-@LastEditTime: 2020-05-26 12:30:00
+@LastEditTime: 2020-07-13 20:41:44
 @LastEditors: Please set LastEditors
 @Description: In User Settings Edit
 @FilePath: /ptg/evaluate.py
@@ -13,8 +15,9 @@ from torch.utils.data import DataLoader
 from dataset import collate_fn
 import config
 
+
 def evaluate(model, val_data, epoch):
-    print('validate')
+    print('validating')
 
     val_loss = []
     with torch.no_grad():
