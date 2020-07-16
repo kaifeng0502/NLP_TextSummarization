@@ -3,9 +3,9 @@
 '''
 @Author: lpx, jby
 @Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-15 10:43:20
+@LastEditTime: 2020-07-16 15:59:48
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Define configuration parameters.
 @FilePath: /JD_project_2/baseline/model/config.py
 '''
 
@@ -55,6 +55,7 @@ epochs = 8
 batch_size = 8
 coverage = False
 fine_tune = False
+log_path = '../runs/baseline'
 
 # Testing
 test_data_path: str = './data/test.txt'

@@ -3,9 +3,9 @@
 '''
 @Author: jby
 @Date: 2020-07-13 14:18:13
-@LastEditTime: 2020-07-15 11:30:16
+@LastEditTime: 2020-07-16 17:59:16
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Define the vocabulary object.
 @FilePath: /JD_project_2/baseline/model/vocab.py
 '''
 
@@ -27,6 +27,11 @@ class Vocab(object):
         self.embeddings = None
 
     def add_words(self, words):
+        """Add a new token to the vocab and do mapping between word and index.
+
+        Args:
+            words (str): The token to be added.
+        """
         for word in words:
             if word not in self.word2index:
                 self.word2index[word] = len(self.index2word)
@@ -40,7 +45,6 @@ class Vocab(object):
             for line in f:
                 line = line.split()
                 word = line[0].decode('utf-8')
-                # self.add_words([word])
                 idx = self.word2index.get(word)
                 if idx is not None:
                     vec = np.array(line[1:], dtype=dtype)

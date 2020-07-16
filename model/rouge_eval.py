@@ -3,9 +3,9 @@
 '''
 @Author: lpx
 @Date: 2020-07-13 17:56:13
-@LastEditTime: 2020-07-15 17:53:34
+@LastEditTime: 2020-07-16 17:54:26
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Evaluate the model with ROUGE score.
 @FilePath: /JD_project_2/baseline/model/rouge_eval.py
 '''
 
@@ -34,18 +34,22 @@ class RougeEval():
                 ref = ''.join(list(jieba.cut(ref))).replace('。', '.')
                 self.sources.append(source)
                 self.refs.append(ref)
-        print('Evaluating.')
         print(f'Test set contains {len(self.sources)} samples.')
 
     @timer('building hypotheses')
     def build_hypos(self, predict):
+        """Generate hypos for the dataset.
+
+        Args:
+            predict (predict.Predict()): The predictor instance.
+        """
         print('Building hypotheses.')
         count = 0
         for source in self.sources:
-            if count % 50 == 0:
+            count += 1
+            if count % 100 == 0:
                 print(count)
             self.hypos.append(predict.predict(source.split()))
-            count += 1
 
     def get_average(self):
         assert len(self.hypos) > 0, 'Build hypotheses first!'

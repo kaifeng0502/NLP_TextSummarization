@@ -1,9 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
-@Author: your name
+@Author: lpx
 @Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-15 11:21:38
+@LastEditTime: 2020-07-16 15:41:42
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Helper functions or classes used in data processing.
 @FilePath: /JD_project_2/baseline/data/data_utils.py
 '''
 

@@ -3,9 +3,9 @@
 '''
 @Author: lpx
 @Date: 2020-07-13 20:16:37
-@LastEditTime: 2020-07-15 11:29:56
+@LastEditTime: 2020-07-16 15:43:50
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Process a raw dataset into a sample file.
 @FilePath: /JD_project_2/baseline/data/process.py
 '''
 

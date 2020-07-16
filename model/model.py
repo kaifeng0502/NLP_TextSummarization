@@ -3,9 +3,9 @@
 '''
 @Author: your name
 @Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-15 11:40:16
+@LastEditTime: 2020-07-16 17:35:06
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Define the model.
 @FilePath: /JD_project_2/baseline/model/model.py
 '''
 
@@ -55,6 +55,7 @@ class Encoder(nn.Module):
 class Attention(nn.Module):
     def __init__(self, hidden_units):
         super(Attention, self).__init__()
+        # Define feed-forward layers.
         self.Wh = nn.Linear(2*hidden_units, 2*hidden_units, bias=False)
         self.Ws = nn.Linear(2*hidden_units, 2*hidden_units)
         self.v = nn.Linear(2*hidden_units, 1, bias=False)
@@ -170,11 +171,11 @@ class Decoder(nn.Module):
 
         # calculate vocabulary distribution
         # (batch_size, hidden_units)
-        FC1_out = self.W1(concat_vector)
+        FF1_out = self.W1(concat_vector)
         # (batch_size, vocab_size)
-        FC2_out = self.W2(FC1_out)
+        FF2_out = self.W2(FF1_out)
         # (batch_size, vocab_size)
-        p_vocab = F.softmax(FC2_out, dim=1)
+        p_vocab = F.softmax(FF2_out, dim=1)
 
         return p_vocab, decoder_states
 
@@ -266,26 +267,28 @@ class Seq2seq(nn.Module):
         encoder_output, encoder_states = self.encoder(x_copy)
         decoder_states = self.reduce_state(encoder_states)
 
+        # Calculate loss for every step.
         step_losses = []
         for t in range(y.shape[1]-1):
-            decoder_input_t = y[:, t]
-            decoder_target_t = y[:, t+1]
+            decoder_input_t = y[:, t]  # x_t
+            decoder_target_t = y[:, t+1]  # y_t
+            # Get context vector from the attention network.
             context_vector, attention_weights = self.attention(
                 decoder_states, encoder_output, x_padding_masks)
-
+            # Get vocab distribution and hidden states from the decoder.
             p_vocab, decoder_states = self.decoder(
                 decoder_input_t.unsqueeze(1), decoder_states, encoder_output,
                 context_vector)
 
-            p_vocab_list = []
-            for i in range(len(decoder_target_t)):
-                p_vocab_list.append(p_vocab[i, decoder_target_t[i]])
-
-            p_vocab_target = torch.stack(p_vocab_list)
-            # apply a mask such that pad zeros do not affect the loss
+            # Get the probabilities predict by the model for target tokens.
+            target_probs = torch.gather(p_vocab,
+                                        1,
+                                        decoder_target_t.unsqueeze(1))
+            target_probs = target_probs.squeeze(1)
+            # Apply a mask such that pad zeros do not affect the loss
             mask = torch.ne(decoder_target_t, 0).byte()
             # Do smoothing to prevent getting NaN loss because of log(0).
-            loss = -torch.log(p_vocab_target+config.eps)
+            loss = -torch.log(target_probs+config.eps)
             mask = mask.float()
             loss = loss * mask
             step_losses.append(loss)

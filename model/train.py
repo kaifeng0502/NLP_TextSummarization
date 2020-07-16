@@ -3,9 +3,9 @@
 '''
 @Author: lpx, jby
 @Date: 2020-07-13 12:31:25
-@LastEditTime: 2020-07-15 10:48:26
+@LastEditTime: 2020-07-16 17:55:16
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Train the model.
 @FilePath: /JD_project_2/baseline/model/train.py
 '''
 
@@ -14,7 +14,7 @@ import torch
 from model import Seq2seq
 import os
 import numpy as np
-from dataset import TextDataset
+from dataset import SampleDataset
 from torch import optim
 from torch.utils.data import DataLoader
 import pickle
@@ -24,14 +24,15 @@ from tqdm import tqdm
 from evaluate import evaluate
 import config
 from tensorboardX import SummaryWriter
+from dataset import PairDataset
 
 
 def train(dataset, val_dataset, v, start_epoch=0):
     """Train the model, evaluate it and store it.
 
     Args:
-        dataset (dataset.MyDataset): The training dataset.
-        val_dataset (dataset.MyDataset): The evaluation dataset.
+        dataset (dataset.PairDataset): The training dataset.
+        val_dataset (dataset.PairDataset): The evaluation dataset.
         v (vocab.Vocab): The vocabulary built from the training dataset.
         start_epoch (int, optional): The starting epoch number. Defaults to 0.
     """
@@ -44,11 +45,12 @@ def train(dataset, val_dataset, v, start_epoch=0):
 
     # forward
     print("loading data")
-    train_data = TextDataset(dataset.pairs, v)
-    val_data = TextDataset(val_dataset.pairs, v)
+    train_data = SampleDataset(dataset.pairs, v)
+    val_data = SampleDataset(val_dataset.pairs, v)
 
     print("initializing optimizer")
 
+    # Define the optimizer.
     optimizer = optim.Adagrad(model.parameters(),
                               lr=config.learning_rate,
                               lr_decay=config.lr_decay,
@@ -63,42 +65,51 @@ def train(dataset, val_dataset, v, start_epoch=0):
         with open(config.losses_path, 'rb') as f:
             val_losses = pickle.load(f)
 
-    writer = SummaryWriter()
+    # SummaryWriter: Log writer used for TensorboardX visualization.
+    writer = SummaryWriter(config.log_path)
+    # tqdm: A tool for drawing progress bars during training.
     with tqdm(total=config.epochs) as epoch_progress:
         for epoch in range(start_epoch, config.epochs):
-            batch_losses = []
+            batch_losses = []  # Get loss of each batch.
             with tqdm(total=len(train_dataloader) // config.batch_size)\
                     as batch_progress:
-                for i, data in enumerate(tqdm(train_dataloader)):
-                    model.train()
+                for batch, data in enumerate(tqdm(train_dataloader)):
                     x, y, x_len, y_len, oov, len_oovs = data
-                    if config.is_cuda:
+                    assert not np.any(np.isnan(x.numpy()))
+                    if config.is_cuda:  # Training with GPUs.
                         x = x.to(DEVICE)
                         y = y.to(DEVICE)
                         x_len = x_len.to(DEVICE)
                         len_oovs = len_oovs.to(DEVICE)
 
-                    optimizer.zero_grad()
-                    assert not np.any(np.isnan(x.cpu().numpy()))
-                    loss = model(x, x_len, y, len_oovs, batch=i)
+                    model.train()  # Sets the module in training mode.
+                    optimizer.zero_grad()  # Clear gradients.
+                    # Calculate loss.
+                    loss = model(x, x_len, y, len_oovs, batch=batch)
                     batch_losses.append(loss.item())
-                    loss.backward()
+                    loss.backward()  # Backpropagation.
+
+                    # Do gradient clipping to prevent gradient explosion.
                     clip_grad_norm_(model.encoder.parameters(),
                                     config.max_grad_norm)
                     clip_grad_norm_(model.decoder.parameters(),
                                     config.max_grad_norm)
                     clip_grad_norm_(model.attention.parameters(),
                                     config.max_grad_norm)
-                    optimizer.step()
-                    if (i % 100) == 0:
+                    optimizer.step()  # Update weights.
+
+                    # Output and record epoch loss every 100 batches.
+                    if (batch+1 % 100) == 0:
                         batch_progress.set_description(f'Epoch {epoch}')
-                        batch_progress.set_postfix(Batch=i, Loss=loss.item())
+                        batch_progress.set_postfix(Batch=batch,
+                                                   Loss=loss.item())
                         batch_progress.update()
                         writer.add_scalar(f'Average loss for epoch {epoch}',
                                           np.mean(batch_losses),
-                                          global_step=i)
-
+                                          global_step=batch)
+            # Calculate average loss over all batches in an epoch.
             epoch_loss = np.mean(batch_losses)
+
             epoch_progress.set_description(f'Epoch {epoch}')
             epoch_progress.set_postfix(Loss=epoch_loss)
             epoch_progress.update()
@@ -107,6 +118,8 @@ def train(dataset, val_dataset, v, start_epoch=0):
 
             print('training loss:{}'.format(epoch_loss),
                   'validation loss:{}'.format(avg_val_loss))
+
+            # Update minimum evaluating loss.
             if (avg_val_loss < val_losses):
                 torch.save(model.encoder, config.encoder_save_name)
                 torch.save(model.decoder, config.decoder_save_name)
@@ -117,3 +130,22 @@ def train(dataset, val_dataset, v, start_epoch=0):
                 pickle.dump(val_losses, f)
 
     writer.close()
+
+
+if __name__ == "__main__":
+    # Prepare dataset for training.
+    DEVICE = torch.device('cuda') if config.is_cuda else torch.device('cpu')
+    dataset = PairDataset(config.data_path,
+                          max_src_len=config.max_src_len,
+                          max_tgt_len=config.max_tgt_len,
+                          truncate_src=config.truncate_src,
+                          truncate_tgt=config.truncate_tgt)
+    val_dataset = PairDataset(config.val_data_path,
+                              max_src_len=config.max_src_len,
+                              max_tgt_len=config.max_tgt_len,
+                              truncate_src=config.truncate_src,
+                              truncate_tgt=config.truncate_tgt)
+
+    vocab = dataset.build_vocab(embed_file=config.embed_file)
+
+    train(dataset, val_dataset, vocab, start_epoch=0)

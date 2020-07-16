@@ -3,9 +3,9 @@
 '''
 @Author: lpx, jby
 @Date: 2020-07-13 11:07:48
-@LastEditTime: 2020-07-15 17:57:16
+@LastEditTime: 2020-07-16 17:56:14
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Helper functions or classes used for the model.
 @FilePath: /JD_project_2/baseline/model/utils.py
 '''
 
@@ -189,6 +189,17 @@ class Beam(object):
 
 
 def add2heap(heap, item, k):
+    """Maintain a heap with k nodes and the smallest one as root.
+
+    Args:
+        heap (list): The list to heapify.
+        item (tuple):
+            The tuple as item to store.
+            Comparsion will be made according to values in the first position.
+            If there is a tie, values in the second position will be compared,
+            and so on.
+        k (int): The capacity of the heap.
+    """
     if len(heap) < k:
         heapq.heappush(heap, item)
     else:

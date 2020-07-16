@@ -3,9 +3,9 @@
 '''
 @Author: jby
 @Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-15 12:06:45
+@LastEditTime: 2020-07-16 15:47:12
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Evaluate the loss in the dev set.
 @FilePath: /JD_project_2/baseline/model/evaluate.py
 '''
 
@@ -22,7 +22,7 @@ def evaluate(model, val_data, epoch):
 
     Args:
         model (torch.nn.Module): The model to evaluate.
-        val_data (dataset.MyDataset): The evaluation data set.
+        val_data (dataset.PairDataset): The evaluation data set.
         epoch (int): The epoch number.
 
     Returns:
@@ -38,13 +38,13 @@ def evaluate(model, val_data, epoch):
                                     shuffle=True,
                                     pin_memory=True, drop_last=True,
                                     collate_fn=collate_fn)
-        for i, data in enumerate(tqdm(val_dataloader)):
+        for batch, data in enumerate(tqdm(val_dataloader)):
             x, y, x_len, y_len, oov, len_oovs = data
             if config.is_cuda:
                 x = x.to(DEVICE)
                 y = y.to(DEVICE)
                 x_len = x_len.to(DEVICE)
                 len_oovs = len_oovs.to(DEVICE)
-            loss = model(x, x_len, y, len_oovs, batch=i)
+            loss = model(x, x_len, y, len_oovs, batch=batch)
             val_loss.append(loss.item())
     return np.mean(val_loss)

@@ -3,9 +3,9 @@
 '''
 @Author: jby
 @Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-15 11:30:06
+@LastEditTime: 2020-07-16 15:45:18
 @LastEditors: Please set LastEditors
-@Description: In User Settings Edit
+@Description: Define the format of data used in the model.
 @FilePath: /JD_project_2/baseline/model/dataset.py
 '''
 
@@ -20,7 +20,10 @@ from collections import Counter
 import config
 
 
-class MyDataset(object):
+class PairDataset(object):
+    """The class represents source-reference pairs.
+
+    """
     def __init__(self,
                  filename,
                  tokenize: Callable = simple_tokenizer,
@@ -84,7 +87,10 @@ class MyDataset(object):
         return vocab
 
 
-class TextDataset(Dataset):
+class SampleDataset(Dataset):
+    """The class represents a sample set for training.
+
+    """
     def __init__(self, data_pair, vocab):
         self.src_sents = [x[0] for x in data_pair]
         self.trg_sents = [x[1] for x in data_pair]
@@ -95,10 +101,10 @@ class TextDataset(Dataset):
     def __getitem__(self, index):
         x, oov = source2ids(self.src_sents[index], self.vocab)
         return {
-            'x': [self.vocab.EOS] + x,
+            'x': [self.vocab.SOS] + x,
             'OOV': oov,
             'len_OOV': len(oov),
-            'y': [self.vocab.EOS] +
+            'y': [self.vocab.SOS] +
                  [self.vocab[x] for x in self.trg_sents[index]],
             'x_len': len(self.src_sents[index]),
             'y_len': len(self.trg_sents[index])
