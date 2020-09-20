@@ -1,15 +1,9 @@
-#!/usr/bin/env python
+ #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
-@Author: jby
-@Date: 2020-07-13 14:18:13
-@LastEditTime: 2020-07-16 17:59:16
-@LastEditors: Please set LastEditors
-@Description: Define the vocabulary object.
-@FilePath: /JD_project_2/baseline/model/vocab.py
-'''
+
 
 from collections import Counter
+
 import numpy as np
 
 
@@ -30,15 +24,28 @@ class Vocab(object):
         """Add a new token to the vocab and do mapping between word and index.
 
         Args:
-            words (str): The token to be added.
+            words (list): The list of tokens to be added.
         """
+        ###########################################
+        #          TODO: module 1 task 1          #
+        ###########################################
         for word in words:
             if word not in self.word2index:
                 self.word2index[word] = len(self.index2word)
                 self.index2word.append(word)
+
         self.word2count.update(words)
 
     def load_embeddings(self, file_path: str, dtype=np.float32) -> int:
+        """Load embedding word vector.
+
+        Args:
+            file_path (str): The file path of word vector to load.
+            dtype (numpy dtype, optional): Defaults to np.float32.
+
+        Returns:
+            int: Number of embedded tokens.
+        """
         num_embeddings = 0
         vocab_size = len(self)
         with open(file_path, 'rb') as f:
@@ -46,10 +53,13 @@ class Vocab(object):
                 line = line.split()
                 word = line[0].decode('utf-8')
                 idx = self.word2index.get(word)
+                # Check whether the token is in the vocab.
                 if idx is not None:
                     vec = np.array(line[1:], dtype=dtype)
                     if self.embeddings is None:
+                        # Get embedding dimension.
                         n_dims = len(vec)
+                        # Initialize word vectors.
                         self.embeddings = np.random.normal(
                             np.zeros((vocab_size, n_dims))).astype(dtype)
                         self.embeddings[self.PAD] = np.zeros(n_dims)

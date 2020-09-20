@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
-@Author: jby
-@Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-16 15:47:12
-@LastEditors: Please set LastEditors
-@Description: Evaluate the loss in the dev set.
-@FilePath: /JD_project_2/baseline/model/evaluate.py
-'''
 
+import os
+import sys
+import pathlib
 import torch
 from tqdm import tqdm
 import numpy as np
 from torch.utils.data import DataLoader
+
+abs_path = pathlib.Path(__file__).parent.absolute()
+sys.path.append(sys.path.append(abs_path))
+
 from dataset import collate_fn
 import config
 

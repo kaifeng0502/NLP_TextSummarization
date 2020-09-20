@@ -1,22 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
-@Author: jby
-@Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-16 15:45:18
-@LastEditors: Please set LastEditors
-@Description: Define the format of data used in the model.
-@FilePath: /JD_project_2/baseline/model/dataset.py
-'''
 
-
-from typing import Callable
-from utils import simple_tokenizer, count_words
-from vocab import Vocab
-from torch.utils.data import Dataset
-import torch
-from utils import sort_batch_by_len, source2ids
+import sys
+import os
+import pathlib
 from collections import Counter
+from typing import Callable
+
+import torch
+from torch.utils.data import Dataset
+
+abs_path = pathlib.Path(__file__).parent.absolute()
+sys.path.append(sys.path.append(abs_path))
+from utils import simple_tokenizer, count_words, sort_batch_by_len, source2ids
+from vocab import Vocab
 import config
 
 
@@ -40,6 +37,7 @@ class PairDataset(object):
             for i, line in enumerate(f):
                 # Split the source and reference by the <sep> tag.
                 pair = line.strip().split('<sep>')
+                # Check whether there is an actual pair.
                 if len(pair) != 2:
                     print("Line %d of %s is malformed." % (i, filename))
                     print(line)
@@ -75,11 +73,18 @@ class PairDataset(object):
         count_words(word_counts,
                     [src + tgr for src, tgr in self.pairs])
         vocab = Vocab()
+        ###########################################
+        #          TODO: module 1 task 2          #
+        ###########################################
+
         # Filter the vocabulary by keeping only the top k tokens in terms of
         # word frequncy in the data set, where k is the maximum vocab size set
         # in "config.py".
-        for word, count in word_counts.most_common(config.max_vocab_size):
+
+        for word,count in word_counts.most_common(config.max_vocab_size):
             vocab.add_words([word])
+
+
         if embed_file is not None:
             count = vocab.load_embeddings(embed_file)
             print("%d pre-trained embeddings loaded." % count)
@@ -101,11 +106,12 @@ class SampleDataset(Dataset):
     def __getitem__(self, index):
         x, oov = source2ids(self.src_sents[index], self.vocab)
         return {
-            'x': [self.vocab.SOS] + x,
+            'x': [self.vocab.SOS] + x + [self.vocab.EOS],
             'OOV': oov,
             'len_OOV': len(oov),
             'y': [self.vocab.SOS] +
-                 [self.vocab[x] for x in self.trg_sents[index]],
+                 [self.vocab[x] for x in self.trg_sents[index]] +
+                 [self.vocab.EOS],
             'x_len': len(self.src_sents[index]),
             'y_len': len(self.trg_sents[index])
         }
@@ -146,4 +152,5 @@ def collate_fn(batch):
     x_len = torch.tensor(data_batch["x_len"])
     y_len = torch.tensor(data_batch["y_len"])
     return x_padded, y_padded, x_len, y_len, OOV, len_OOV
+
 

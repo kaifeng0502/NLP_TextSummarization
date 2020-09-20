@@ -1,18 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''
-@Author: lpx, jby
-@Date: 2020-07-13 11:07:48
-@LastEditTime: 2020-07-16 17:56:14
-@LastEditors: Please set LastEditors
-@Description: Helper functions or classes used for the model.
-@FilePath: /JD_project_2/baseline/model/utils.py
-'''
 
 
-import numpy as np
 import time
 import heapq
+
+import numpy as np
 
 
 def timer(module):
@@ -55,6 +48,14 @@ def count_words(counter, text):
 
 
 def sort_batch_by_len(data_batch):
+    """
+
+    Args:
+        data_batch (Tensor): Batch before sorted.
+
+    Returns:
+        Tensor: Batch after sorted.
+    """
     res = {'x': [],
            'y': [],
            'x_len': [],
@@ -94,22 +95,26 @@ def outputids2words(id_list, source_oovs, vocab):
         Returns:
             words: list of words (strings)
     """
+
+    ###########################################
+    #          TODO: module 1 task 4          #
+    ###########################################
+
     words = []
     for i in id_list:
         try:
-            w = vocab.index2word[i]  # might be [UNK]
-        except IndexError:  # w is OOV
-            assert_msg = "Error: cannot find the ID the in the vocabulary."
+            w = vocab.index2word[i]
+        except IndexError: #w is oov
+            assert_msg = 'error id cant find'
             assert source_oovs is not None, assert_msg
             source_oov_idx = i - vocab.size()
             try:
                 w = source_oovs[source_oov_idx]
-            except ValueError:  # i doesn't correspond to an source oov
-                raise ValueError(
-                    'Error: model produced word ID %i corresponding to source OOV %i \
-                     but this example only has %i source OOVs'
-                    % (i, source_oov_idx, len(source_oovs)))
+            except ValueError:
+                raise ValueError('error id cant find oov')
         words.append(w)
+
+
     return ' '.join(words)
 
 
@@ -128,24 +133,32 @@ def source2ids(source_words, vocab):
         A list of the OOV words in the source (strings), in the order
         corresponding to their temporary source OOV numbers.
     """
+
+    ###########################################
+    #          TODO: module 1 task 3          #
+    ###########################################
+
     ids = []
     oovs = []
     unk_id = vocab["<UNK>"]
-    for w in source_words:
-        i = vocab[w]
-        if i == unk_id:  # If w is OOV
-            if w not in oovs:  # Add to list of OOVs
-                oovs.append(w)
-            # This is 0 for the first source OOV, 1 for the second source OOV
-            oov_num = oovs.index(w)
-            # This is e.g. 20000 for the first source OOV, 50001 for the second
-            ids.append(vocab.size() + oov_num)
+
+    for word in source_words:
+        i = vocab[word]
+        if i == unk_id:
+            if word not in oovs:
+                oovs.append(word)
+            oov_num=oovs.index(word)
+            ids.append(vocab.size()+oov_num)
+
         else:
             ids.append(i)
+ 
     return ids, oovs
 
 
 class Beam(object):
+    """The contianer for a temperay sequence used in beam search.
+    """
     def __init__(self,
                  tokens,
                  log_probs,
@@ -167,6 +180,8 @@ class Beam(object):
                attention_weights,
                max_oovs,
                encoder_input):
+        """Extend the curren beam using now token and return a new beam.
+        """
         return Beam(tokens=self.tokens + [token],
                     log_probs=self.log_probs + [log_prob],
                     decoder_states=decoder_states,

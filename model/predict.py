@@ -1,21 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 '''
-@Author: lpx, jby
+
 @Date: 2020-07-13 11:00:51
-@LastEditTime: 2020-07-16 17:44:36
+@LastEditTime: 2020-07-18 16:48:37
 @LastEditors: Please set LastEditors
 @Description: Generate a summary.
 @FilePath: /JD_project_2/baseline/model/predict.py
 '''
 
-import config
-import torch
-from dataset import PairDataset
-from model import Seq2seq
-from utils import source2ids, outputids2words, Beam, timer, add2heap
-import jieba
+
 import random
+
+import torch
+import jieba
+
+abs_path = pathlib.Path(__file__).parent.absolute()
+sys.path.append(sys.path.append(abs_path))
+
+import config
+from model import Seq2seq
+from dataset import PairDataset
+from utils import source2ids, outputids2words, Beam, timer, add2heap
 
 
 class Predict():
@@ -56,6 +62,9 @@ class Predict():
         Returns:
             summary (list): The token list of the result summary.
         """
+        ###########################################
+        #          TODO: module 4 task 1          #
+        ###########################################
 
         # Get encoder output and states.
         encoder_output, encoder_states = self.model.encoder(encoder_input)
@@ -64,34 +73,28 @@ class Predict():
         decoder_states = self.model.reduce_state(encoder_states)
 
         # Initialize decoder's input at time step 0 with the SOS token.
-        decoder_input_t = torch.ones(1) * self.vocab.SOS
+        decoder_input_t = torch.ones(1)*self.vocab.SOS
         decoder_input_t = decoder_input_t.to(self.DEVICE, dtype=torch.int64)
         summary = [self.vocab.SOS]
 
         # Generate hypothesis with maximum decode step.
-        while int(decoder_input_t.tolist()[0]) != (self.vocab.EOS) \
+        while int(decoder_input_t.item()) != (self.vocab.EOS) \
                 and len(summary) < max_sum_len:
 
-            context_vector, attention_weights = \
-                self.model.attention(decoder_states,
-                                     encoder_output,
-                                     x_padding_masks)
+            context_vector, attention_weights = self.model.attention(decoder_states,encoder_output,x_padding_masks)
+
             p_vocab, decoder_states = \
                 self.model.decoder(decoder_input_t.unsqueeze(1),
                                    decoder_states,
                                    encoder_output,
                                    context_vector)
             # Get next token with maximum probability.
-            decoder_input_t = torch.argmax(p_vocab, dim=1).to(self.DEVICE)
+            decoder_input_t = torch.argmax(p_vocab,dim=1).to(self.DEVICE)
             decoder_word_idx = decoder_input_t.item()
             summary.append(decoder_word_idx)
-
-            oov_token = torch.full(decoder_input_t.shape, self.vocab.UNK)
-            oov_token = oov_token.long().to(self.DEVICE)
-            decoder_input_t = \
-                torch.where(decoder_input_t > len(self.vocab) - 1,
-                            oov_token,
-                            decoder_input_t).to(self.DEVICE)
+            # Replace the indexes of OOV words with the index of UNK token
+            # to prevent index-out-of-bound error in the decoder.
+            decoder_input_t = self.replace_oov(decoder_input_t)
 
         return summary
 
@@ -110,52 +113,30 @@ class Predict():
             best_k (list(Beam)): The list of best k candidates.
 
         """
+        ###########################################
+        #          TODO: module 4 task 2.2        #
+        ###########################################
+
         # use decoder to generate vocab distribution for the next token
-        decoder_input_t = torch.tensor(beam.tokens[-1]).reshape(1, 1)
+        decoder_input_t = 
         decoder_input_t = decoder_input_t.to(self.DEVICE)
 
         # Get context vector from attention network.
-        context_vector, attention_weights = \
-            self.model.attention(beam.decoder_states,
-                                 encoder_output,
-                                 x_padding_masks)
+        context_vector, attention_weights = 
 
-        # Replace the indexes of OOV words with the index of OOV token
+        # Replace the indexes of OOV words with the index of UNK token
         # to prevent index-out-of-bound error in the decoder.
-        oov_token = torch.full(decoder_input_t.shape,
-                               self.vocab.UNK).long().to(self.DEVICE)
-        decoder_input_t = torch.where(decoder_input_t > len(self.vocab) - 1,
-                                      oov_token,
-                                      decoder_input_t)
-        p_vocab, decoder_states = self.model.decoder(decoder_input_t,
-                                                     beam.decoder_states,
-                                                     encoder_output,
-                                                     context_vector)
+        decoder_input_t = self.replace_oov(decoder_input_t)
+        p_vocab, decoder_states = 
 
         # Calculate log probabilities.
-        log_probs = torch.log(p_vocab.squeeze())
-        # Filter forbidden tokens.
-        if len(beam.tokens) == 1:
-            forbidden_ids = [
-                self.vocab[u"这"],
-                self.vocab[u"此"],
-                self.vocab[u"采用"],
-                self.vocab[u"，"],
-                self.vocab[u"。"],
-                self.vocab.UNK
-            ]
-            log_probs[forbidden_ids] = -float('inf')
+        log_probs = 
 
         # Get top k tokens and the corresponding logprob.
-        topk_probs, topk_idx = torch.topk(log_probs, k)
+        topk_probs, topk_idx = 
 
         # Extend the current hypo with top k tokens, resulting k new hypos.
-        best_k = [beam.extend(x,
-                  log_probs[x],
-                  decoder_states,
-                  attention_weights,
-                  beam.max_oovs,
-                  beam.encoder_input) for x in topk_idx.tolist()]
+        best_k = 
 
         return best_k
 
@@ -178,22 +159,21 @@ class Predict():
         Returns:
             result (list(Beam)): The list of best k candidates.
         """
+        ###########################################
+        #          TODO: module 4 task 2.3        #
+        ###########################################
+
         # run body_sequence input through encoder
-        encoder_output, encoder_states = self.model.encoder(encoder_input)
+        encoder_output, encoder_states = 
 
         # initialize decoder states with encoder forward states
-        decoder_states = self.model.reduce_state(encoder_states)
+        decoder_states = 
 
         # initialize the hypothesis with a class Beam instance.
-        attention_weights = torch.zeros(
-            (1, encoder_input.shape[1])).to(self.DEVICE)
+        attention_weights = 
+        init_beam = Beam(
 
-        init_beam = Beam([self.vocab.SOS],
-                         [0],
-                         decoder_states,
-                         attention_weights,
-                         max_oovs,
-                         encoder_input)
+        )
 
         # get the beam size and create a list for stroing current candidates
         # and a list for completed hypothesis
@@ -206,10 +186,11 @@ class Predict():
 
             topk = []
             for beam in curr:
+                # When an EOS token is generated, add the hypo to the completed
+                # list and decrease beam size.
                 if beam.tokens[-1] == self.vocab.EOS:
-                    completed.append(beam)
-                    k -= 1
-                    continue
+
+
                 for can in self.best_k(beam,
                                        k,
                                        encoder_output,
@@ -217,9 +198,8 @@ class Predict():
                     # Using topk as a heap to keep track of top k candidates.
                     # Using the sequence scores of the hypos to campare
                     # and object ids to break ties.
-                    add2heap(topk, (can.seq_score(), id(can), can), k)
 
-            curr = [items[2] for items in topk]
+            curr = 
             # stop when there are enough completed hypothesis
             if len(completed) == k:
                 break
@@ -227,9 +207,7 @@ class Predict():
         # take whatever when have in current best k as the final candidates.
         completed += curr
         # sort the hypothesis by normalized probability and choose the best one
-        result = sorted(completed,
-                        key=lambda x: x.seq_score(),
-                        reverse=True)[0].tokens
+        result = 
         return result
 
     @timer(module='doing prediction')
@@ -247,22 +225,22 @@ class Predict():
         Returns:
             str: The final summary.
         """
+        # Do tokenization if the input is raw text.
         if isinstance(text, str) and tokenize:
             text = list(jieba.cut(text))
         x, oov = source2ids(text, self.vocab)
         x = torch.tensor(x).to(self.DEVICE)
         max_oovs = len(oov)
-        oov_token = torch.full(x.shape, self.vocab.UNK).long().to(self.DEVICE)
-        x_copy = torch.where(x > len(self.vocab) - 1, oov_token, x)
+        x_copy = self.replace_oov(x)
         x_copy = x_copy.unsqueeze(0)
         x_padding_masks = torch.ne(x_copy, 0).byte().float()
-        if beam_search:
+        if beam_search:  # Use beam search to decode.
             summary = self.beam_search(x_copy,
                                        max_sum_len=config.max_dec_steps,
                                        beam_width=config.beam_size,
                                        max_oovs=max_oovs,
                                        x_padding_masks=x_padding_masks)
-        else:
+        else:  # Use greedy search to decode.
             summary = self.greedy_search(x_copy,
                                          max_sum_len=config.max_dec_steps,
                                          max_oovs=max_oovs,
@@ -272,6 +250,21 @@ class Predict():
                                   self.vocab)
         return summary.replace('<SOS>', '').replace('<EOS>', '').strip()
 
+    def replace_oov(self, input_t):
+        """Replace oov tokens with <UNK> token in an input tensor.
+
+        Args:
+            input_t (Tensor): The input tensor.
+
+        Returns:
+            Tensor: All oov tokens are replaced with <UNK> token.
+        """        
+        oov_token = torch.full(input_t.shape,
+                               self.vocab.UNK).long().to(self.DEVICE)
+        input_t = torch.where(input_t > len(self.vocab) - 1,
+                              oov_token,
+                              input_t)
+        return input_t
 
 if __name__ == "__main__":
     pred = Predict()
@@ -281,7 +274,9 @@ if __name__ == "__main__":
         picked = random.choice(list(test))
         source, ref = picked.strip().split('<sep>')
 
-    prediction = pred.predict(source.split(),  beam_search=True)
+    greedy_prediction = pred.predict(source.split(),  beam_search=False)
+    beam_prediction = pred.predict(source.split(),  beam_search=True)
 
-    print('hypo: ', prediction)
+    print('greedy: ', greedy_prediction)
+    print('beam: ', beam_prediction)
     print('ref: ', ref)
